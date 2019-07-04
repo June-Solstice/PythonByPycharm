@@ -1,6 +1,8 @@
 import crawler.download as download
 import re#正则表达式
 import queue
+import itertools
+import crawler.discache as discache
 
 from urllib import parse,robotparser#robotparser用来查看当前网站不允许的操作
 from crawler.throttle import Throttle
@@ -34,12 +36,12 @@ def get_links(html):#得到所有需要的html链接
 
 
 def link_crawler(start_url,link_regex,delay=5,useragent="wswp",robots_url_suffix="robots.txt",
-                 max_depth=5,scrape_callback=None,num_retries=3):#创建一个队列并遍历
+                 max_depth=5,scrape_callback=None,num_retries=3,cache={}):#创建一个队列并遍历
     set1={}
     crawler_queue=queue.Queue()
     crawler_queue.put(start_url)
     headers={"User-Agent":useragent}#注意，此处headers是一个字典，因此需要符合字典的特点
-    D = download.Download ( headers, delay=delay )
+    D = download.Download ( headers, delay=delay ,cache=cache)
     protocol,domain,*_=parse.urlsplit(start_url)
     robot_url=parse.urlunsplit((protocol,domain,robots_url_suffix,"",""))#使用元组存储需要连接的url
     rp=parse_robots(robot_url)
@@ -53,15 +55,16 @@ def link_crawler(start_url,link_regex,delay=5,useragent="wswp",robots_url_suffix
         html = D ( url, num_retries )
         if not html:
             continue
+        links=[]
         if scrape_callback:
-            scrape_callback(html)
+            links=scrape_callback(html) or links
         depth=set1.get(url,0)
         if depth==max_depth:
             continue
 
         #Todo
 
-        for link in get_links(html):
+        for link in itertools.chain(get_links(html),links):
             if link and re.match(link_regex,link):
                 abs_link=parse.urljoin(url,link)
                 if abs_link not in set1:
@@ -71,7 +74,7 @@ def link_crawler(start_url,link_regex,delay=5,useragent="wswp",robots_url_suffix
 if __name__ == "__main__":
     url = "https://alexa.chinaz.com/Country/index_CN.html"
     link_regex = r"index_CN_"
-    link_crawler ( url, link_regex, 0, scrape_callback=get_content)
+    link_crawler ( url, link_regex, 5, scrape_callback=get_content,cache=discache.DiskCache())
 
 
 
