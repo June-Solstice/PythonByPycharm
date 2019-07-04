@@ -25,9 +25,7 @@ def parse_robots(robots_url):#用来得到
 def get_content(html=None):
     all=lxml.fromstring(html)
     for e in all.cssselect ( ".righttxt span" ):
-        print ( e.text_content () )
-        # print(dir(e))
-        # exit(1)
+       pass
 
 
 def get_links(html):#得到所有需要的html链接
@@ -36,7 +34,7 @@ def get_links(html):#得到所有需要的html链接
 
 
 def link_crawler(start_url,link_regex,delay=5,useragent="wswp",robots_url_suffix="robots.txt",
-                 max_depth=5,scrape_callback=None,num_retries=3,cache={}):#创建一个队列并遍历
+                 max_depth=5,scrape_callback=None,num_retries=3,cache=None):#创建一个队列并遍历
     set1={}
     crawler_queue=queue.Queue()
     crawler_queue.put(start_url)
@@ -74,7 +72,7 @@ def link_crawler(start_url,link_regex,delay=5,useragent="wswp",robots_url_suffix
 if __name__ == "__main__":
     url = "https://alexa.chinaz.com/Country/index_CN.html"
     link_regex = r"index_CN_"
-    link_crawler ( url, link_regex, 5, scrape_callback=get_content,cache=discache.DiskCache())
+    link_crawler ( url, link_regex, 0, scrape_callback=get_content,cache=discache.DiskCache())
 
 
 
